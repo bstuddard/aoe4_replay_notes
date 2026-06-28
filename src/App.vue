@@ -13,7 +13,7 @@ const editingGame = ref<GameNote | null>(null)
 const toast = ref('')
 let toastTimer: ReturnType<typeof setTimeout>
 
-const { games, addGame, updateGame, deleteGame, exportJSON, importJSON } = useGames()
+const { games, addGame, updateGame, deleteGame, exportJSON, importJSON, importSingleGame } = useGames()
 
 function showToast(msg: string) {
   clearTimeout(toastTimer)
@@ -60,6 +60,11 @@ async function handleImport(file: File) {
   } catch {
     showToast('Import failed — check the file format.')
   }
+}
+
+function handlePasteGame(json: string) {
+  importSingleGame(json)
+  showToast('Game note saved from Claude!')
 }
 </script>
 
@@ -125,6 +130,7 @@ async function handleImport(file: File) {
         :games="games"
         @export-j-s-o-n="exportJSON"
         @import-j-s-o-n="handleImport"
+        @paste-game="handlePasteGame"
       />
     </div>
 

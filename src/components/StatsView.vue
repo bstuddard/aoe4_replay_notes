@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { GameNote } from '../types'
 
 const props = defineProps<{
@@ -9,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   exportJSON: []
   importJSON: [file: File]
+  pasteGame: [json: string]
 }>()
 
 // Recompute stats inline so this component is self-contained for display
@@ -59,6 +60,27 @@ const stats = computed(() => {
 function handleImport(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (file) emit('importJSON', file)
+}
+
+const showPaste = ref(false)
+const pasteText = ref('')
+const pasteError = ref('')
+
+function submitPaste() {
+  pasteError.value = ''
+  try {
+    emit('pasteGame', pasteText.value.trim())
+    pasteText.value = ''
+    showPaste.value = false
+  } catch {
+    pasteError.value = 'Invalid JSON — check the format and try again.'
+  }
+}
+
+function cancelPaste() {
+  showPaste.value = false
+  pasteText.value = ''
+  pasteError.value = ''
 }
 
 function improvementLabel(id: string): string {
@@ -230,6 +252,40 @@ const maxAreaCount = computed(() =>
           Import JSON
           <input type="file" accept=".json" class="hidden" @change="handleImport" />
         </label>
+      </div>
+
+      <!-- From Claude paste -->
+      <div class="mt-2">
+        <button
+          v-if="!showPaste"
+          type="button"
+          class="btn-secondary w-full"
+          @click="showPaste = true"
+        >
+          Paste from Claude
+        </button>
+
+        <div v-else class="flex flex-col gap-2">
+          <p class="text-[11px] text-muted leading-relaxed">
+            Ask Claude to read <span class="font-mono text-fg-soft">llms.txt</span> from this site,
+            then paste the JSON it gives you here.
+          </p>
+          <textarea
+            v-model="pasteText"
+            class="w-full rounded-[8px] border border-line bg-surface text-fg text-[12px] font-mono p-2.5 resize-none focus:outline-none focus:border-line-gold"
+            rows="8"
+            placeholder='{ "date": "2026-06-28", "result": "win", ... }'
+          />
+          <p v-if="pasteError" class="text-[11px] text-loss-soft">{{ pasteError }}</p>
+          <div class="flex gap-2">
+            <button type="button" class="btn-primary flex-1" @click="submitPaste">
+              Save Game
+            </button>
+            <button type="button" class="btn-secondary flex-1" @click="cancelPaste">
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
