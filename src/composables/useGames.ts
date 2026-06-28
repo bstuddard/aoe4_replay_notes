@@ -52,6 +52,14 @@ export function useGames() {
     URL.revokeObjectURL(url)
   }
 
+  function importSingleGame(raw: string): void {
+    const parsed = JSON.parse(raw)
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed))
+      throw new Error('Expected a single game object')
+    const { id: _id, createdAt: _ca, ...data } = parsed
+    addGame(data)
+  }
+
   function importJSON(file: File): Promise<void> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -114,5 +122,5 @@ export function useGames() {
     return { total, wins, losses, winRate, byCiv, vsStrategy, improvements, recentForm }
   })
 
-  return { games, addGame, updateGame, deleteGame, exportJSON, importJSON, stats }
+  return { games, addGame, updateGame, deleteGame, exportJSON, importJSON, importSingleGame, stats }
 }

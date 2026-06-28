@@ -1,0 +1,242 @@
+# AOE4 Replay Notes — Claude Interview Tool
+
+## What this is
+
+AOE4 Replay Notes is a browser app where Age of Empires IV players log and review their ranked games. All data is stored in the browser's localStorage. This file tells you (Claude) how to interview the user and produce a JSON object the app can import.
+
+**App URL:** derive it from the URL of this file — strip `/llms.txt` from the end.
+For example: if you read `https://example.com/aoe4_replay_notes/llms.txt`, the app is at `https://example.com/aoe4_replay_notes/`.
+
+---
+
+## Your role (step by step)
+
+### Before you start — using game history
+
+The prompt that sent you here may include a JSON array of the user's past games. If it does:
+
+- **Smart defaults**: when asking about civ, map, or strategy, lead with what they used most recently — e.g. "Same civ as last time (English)?" rather than asking from scratch.
+- **Skip obvious questions**: if they say "same map as yesterday" or "same civ", you already know.
+- **Surface patterns lightly**: after collecting everything and before the pre-JSON summary, briefly note one or two patterns if relevant — e.g. "You've flagged *Military Micro* as an improvement area in your last four games" or "This is your third loss vs Fast Castle this week." Keep it to a sentence or two, not a full report.
+- **Don't overwhelm**: the history is context, not the main event. Weave it in naturally.
+
+If no history is present, just run the interview fresh.
+
+---
+
+### Step 1 — Ask for the aoe4world link first
+
+Before anything else, ask:
+> "Do you have an aoe4world.com link for this game? If so, paste it and I'll pre-fill what I can."
+
+If they provide a URL like `https://aoe4world.com/players/{profile_id}-{name}/games/{game_id}`:
+
+1. Extract `game_id` from the path.
+2. Fetch `https://aoe4world.com/api/v0/games/{game_id}` and parse the response.
+3. Use `profile_id` from the URL to identify which team entry is "me" vs "opponent".
+4. Pre-fill the following fields from the API response:
+   - `date` — from `started_at` (ISO date, YYYY-MM-DD)
+   - `result` — the matching player's `result` field (`"win"` or `"loss"`)
+   - `map` — from `map` (the API returns a human-readable name; match it to the valid map list below, using `"Other"` if it isn't in the list)
+   - `myCiv` — from the matching player's `civilization` (map API value → display name using the civ map below)
+   - `opponentName` — from the other team's player `name`
+   - `opponentCiv` — from the other team's player `civilization`
+   - `aoe4worldUrl` — the URL the user gave you
+5. **Show a readable inferred-data card** in this exact format, then ask if anything needs correcting before you continue:
+
+```
+Got it! Here's what I pulled from the replay:
+
+📅 Date     — {date}
+🏆 Result   — {Win / Loss}
+🗺️ Map      — {map}
+⚔️ You      — {myCiv}
+👤 Opponent — {opponentName} ({opponentCiv})
+```
+
+Ask: "Does anything look wrong? Once you confirm I'll ask about the rest."
+
+If they don't have a link, or the fetch fails, just ask for the basics manually.
+
+### Step 2 — Fill in what's still missing
+
+After the inferred-data card is confirmed (or if no link was given), ask about the remaining sections in a natural conversation — not as a bullet list dump. Group related questions together.
+
+**Sections to cover (skip anything already filled from the API):**
+
+- Match basics: date, win/loss, map, aoe4world link
+- Civs & players: your civ, opponent name, opponent civ
+- Age-up timings (all optional — skip if user doesn't know): your Feudal time, your Castle time, opponent Feudal time, opponent Castle time. Format: `mm:ss`
+- Strategies: your build/strategy, your landmarks, opponent's strategy, opponent's landmarks
+- Game narrative: what did your opponent do? How did you respond? Key moments / turning points? What would you do differently?
+- Self-assessment: which improvement areas apply? (offer the list) How would you rate your play 1–5? Any other notes?
+
+### Step 3 — Output
+
+When you have everything, show a **full pre-JSON summary** for the user to confirm before generating the JSON. Use this format:
+
+```
+Here's everything I've got — let me know if you want to change anything before I save it.
+
+📅 {date}  ·  {Win/Loss}  ·  {map}
+⚔️ You: {myCiv}  ·  👤 Opponent: {opponentName} ({opponentCiv})
+
+🕐 Age-up  You: Feudal {myFeudalTime}, Castle {myCastleTime}
+           Them: Feudal {opponentFeudalTime}, Castle {opponentCastleTime}
+
+📋 Your strategy    {myStrategy} — {myLandmarks}
+   Their strategy   {opponentStrategy} — {opponentLandmarks}
+
+📝 What they did    {whatOpponentDid}
+   Your response    {howIResponded}
+   Key moments      {keyMoments}
+   Next time        {whatIWouldDoNext}
+
+🎯 Improve on   {improvement area labels, comma-separated}
+⭐ Rating       {selfRating}/5
+💬 Notes        {generalNotes}
+```
+
+Omit any line whose value is empty. Then ask: "Ready to generate the JSON?"
+
+Once they confirm (or if they just say "yes" / "looks good"), produce the JSON in a fenced code block:
+
+```json
+{ ... }
+```
+
+Then tell the user:
+
+> "Copy the JSON above, then go to **[App URL]** → Stats tab → **Paste from Claude**."
+
+Replace `[App URL]` with the actual URL you derived in Step 1.
+
+---
+
+## Civilization name mapping (API value → display name)
+
+| API value | Display name |
+|---|---|
+| abbasid | Abbasid Dynasty |
+| ayyubids | Ayyubids |
+| byzantines | Byzantines |
+| chinese | Chinese |
+| delhi | Delhi Sultanate |
+| english | English |
+| french | French |
+| hre | HRE |
+| lancaster | House of Lancaster |
+| jeanne_darc | Jeanne d'Arc |
+| japanese | Japanese |
+| malians | Malians |
+| mongols | Mongols |
+| dragon | Order of the Dragon |
+| ottomans | Ottomans |
+| rus | Rus |
+| zhu_xi | Zhu Xi's Legacy |
+
+---
+
+## GameNote JSON schema
+
+All string fields default to `""` if not collected. `improvementAreas` defaults to `[]`.
+
+```json
+{
+  "date": "YYYY-MM-DD",
+  "result": "win | loss",
+  "map": "string — must match a valid map name below",
+  "aoe4worldUrl": "string",
+
+  "myCiv": "string — must match a valid civ name below",
+  "opponentName": "string",
+  "opponentCiv": "string — must match a valid civ name below",
+
+  "myFeudalTime": "mm:ss or empty string",
+  "myCastleTime": "mm:ss or empty string",
+  "opponentFeudalTime": "mm:ss or empty string",
+  "opponentCastleTime": "mm:ss or empty string",
+
+  "myStrategy": "string",
+  "myLandmarks": "string",
+  "opponentStrategy": "string",
+  "opponentLandmarks": "string",
+
+  "whatOpponentDid": "string",
+  "howIResponded": "string",
+  "keyMoments": "string",
+  "whatIWouldDoNext": "string",
+
+  "improvementAreas": ["array of improvement area IDs — see list below"],
+  "selfRating": 1,
+  "generalNotes": "string"
+}
+```
+
+### Valid values
+
+**result:** `"win"` or `"loss"`
+
+**map:** Altai, Ancient Spires, Arabian Peninsula, Archipelago, Black Forest, Boulder Bay, Canal, Cliffside, Confluence, Continental, Danube River, Dry Arabia, French Pass, Glade, Golden Heights, Golden Pit, Gorge, High View, Hideout, Hill and Dale, King of the Hill, Lipany, Mongolian Heights, Mountain Pass, Nagari, Prairie, Red Desert, Rocky River, Savanna, Scandinavia, Socotra, Wetlands, Wolf Lakes, Other
+
+**myCiv / opponentCiv:** Abbasid Dynasty, Ayyubids, Byzantines, Chinese, Delhi Sultanate, English, French, HRE, House of Lancaster, Jeanne d'Arc, Japanese, Malians, Mongols, Order of the Dragon, Ottomans, Rus, Zhu Xi's Legacy, Other / Unknown
+
+**myStrategy / opponentStrategy:** Fast Castle, 2 TC Boom, Feudal Aggression, MAA Rush, Archer Rush, Horseman Rush, Tower Rush, Scout Rush, Springald Rush, Fast Imperial, Sacred Sites, Navy Rush, Siege Push, Landmark Rush, Mixed / Adaptive (opponentStrategy may also be `"Unknown"`)
+
+**improvementAreas** — include zero or more of these IDs:
+
+| ID | Label |
+|---|---|
+| `villager_production` | Villager Production |
+| `tc_idle_time` | TC Idle Time |
+| `economy_management` | Economy / Resources |
+| `build_order` | Build Order Execution |
+| `scouting` | Scouting |
+| `military_micro` | Military Micro |
+| `army_composition` | Army Composition |
+| `upgrades` | Upgrades Timing |
+| `timing_attacks` | Timing Attacks |
+| `defense` | Defense / Walling |
+| `map_control` | Map Control |
+| `landmark_choice` | Landmark Choice |
+| `resource_balance` | Resource Balance |
+| `age_up_timing` | Age-Up Timing |
+
+**selfRating:** integer 1–5
+
+---
+
+## Example final output
+
+````
+```json
+{
+  "date": "2026-06-28",
+  "result": "win",
+  "map": "Dry Arabia",
+  "aoe4worldUrl": "https://aoe4world.com/players/12345678-PlayerName/games/99999999",
+  "myCiv": "English",
+  "opponentName": "RivalsX",
+  "opponentCiv": "French",
+  "myFeudalTime": "3:45",
+  "myCastleTime": "8:20",
+  "opponentFeudalTime": "4:10",
+  "opponentCastleTime": "",
+  "myStrategy": "MAA Rush",
+  "myLandmarks": "Council Hall, King's Palace",
+  "opponentStrategy": "Fast Castle",
+  "opponentLandmarks": "School of Cavalry",
+  "whatOpponentDid": "Opponent rushed to Castle Age for heavy cavalry pressure.",
+  "howIResponded": "Kept MAA pressure going and added spearmen once cavalry appeared.",
+  "keyMoments": "Denied their second TC spot around 9 minutes.",
+  "whatIWouldDoNext": "Get weapon upgrades faster — delayed them and my MAA underperformed.",
+  "improvementAreas": ["upgrades", "military_micro"],
+  "selfRating": 4,
+  "generalNotes": ""
+}
+```
+````
+
+Then (replacing `<APP_URL>` with the real URL you derived — NOT the example.com placeholder above):
+
+> "Copy the JSON above, then go to **&lt;APP_URL&gt;** → Stats tab → 'Paste from Claude' button."

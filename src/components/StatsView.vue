@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { GameNote } from '../types'
 
 const props = defineProps<{
@@ -9,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   exportJSON: []
   importJSON: [file: File]
+  pasteGame: [json: string]
 }>()
 
 // Recompute stats inline so this component is self-contained for display
@@ -59,6 +60,30 @@ const stats = computed(() => {
 function handleImport(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (file) emit('importJSON', file)
+}
+
+const showPaste = ref(false)
+const pasteText = ref('')
+const pasteError = ref('')
+
+function submitPaste() {
+  pasteError.value = ''
+  try {
+    const parsed = JSON.parse(pasteText.value.trim())
+    if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null)
+      throw new Error('Expected a single JSON object, not an array or primitive.')
+    emit('pasteGame', pasteText.value.trim())
+    pasteText.value = ''
+    showPaste.value = false
+  } catch (e) {
+    pasteError.value = e instanceof Error ? e.message : 'Invalid JSON — check the format and try again.'
+  }
+}
+
+function cancelPaste() {
+  showPaste.value = false
+  pasteText.value = ''
+  pasteError.value = ''
 }
 
 function improvementLabel(id: string): string {
@@ -216,9 +241,46 @@ const maxAreaCount = computed(() =>
 
     </template>
 
+    <!-- Paste from Claude -->
+    <div class="form-section">
+      <p class="form-section__title">Add from Claude</p>
+
+      <div v-if="!showPaste">
+        <p class="text-[12px] text-muted leading-relaxed mb-2">
+          Copy the Claude prompt from the top of the page, chat with Claude, then paste the JSON it gives you here.
+        </p>
+        <button
+          type="button"
+          class="btn-primary w-full"
+          @click="showPaste = true"
+        >
+          Paste from Claude
+        </button>
+      </div>
+
+      <div v-else class="flex flex-col gap-2">
+        <textarea
+          v-model="pasteText"
+          class="w-full rounded-[8px] border border-line bg-surface text-fg text-[12px] font-mono p-2.5 resize-none focus:outline-none focus:border-line-gold"
+          rows="8"
+          placeholder='{ "date": "2026-06-28", "result": "win", ... }'
+          autofocus
+        />
+        <p v-if="pasteError" class="text-[11px] text-loss-soft">{{ pasteError }}</p>
+        <div class="flex gap-2">
+          <button type="button" class="btn-primary flex-1" @click="submitPaste">
+            Save Game
+          </button>
+          <button type="button" class="btn-secondary flex-1" @click="cancelPaste">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Data management -->
     <div class="form-section">
-      <p class="form-section__title">Data</p>
+      <p class="form-section__title">Backup &amp; Restore</p>
       <p class="text-[12px] text-muted leading-relaxed">
         Your notes are stored locally in your browser. Export to back them up or move to another device.
       </p>
