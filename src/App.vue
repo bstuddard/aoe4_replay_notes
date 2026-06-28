@@ -66,6 +66,13 @@ function handlePasteGame(json: string) {
   importSingleGame(json)
   showToast('Game note saved from Claude!')
 }
+
+async function copyClaudePrompt() {
+  const schemaUrl = window.location.href.replace(/\/?$/, '') + '/llms.txt'
+  const prompt = `Please fetch and read ${schemaUrl} — it describes a JSON schema for logging AoE4 replay notes. Then interview me to log a game, and give me the completed JSON at the end.`
+  await navigator.clipboard.writeText(prompt)
+  showToast('Prompt copied — paste it into Claude!')
+}
 </script>
 
 <template>
@@ -77,6 +84,13 @@ function handlePasteGame(json: string) {
     <header class="text-center mb-5">
       <h1 class="m-0 font-display text-[30px] tracking-[0.28em] font-bold text-gold-soft indent-[0.28em]">REPLAY NOTES</h1>
       <p class="mt-1 mb-0 font-mono text-[10px] tracking-[0.16em] uppercase text-muted">Age of Empires IV · Game Analysis</p>
+      <button
+        type="button"
+        class="mt-3 px-3 py-1.5 rounded-full border border-line text-[11px] font-mono tracking-wide text-muted hover:border-line-gold hover:text-gold-soft transition-colors duration-150"
+        @click="copyClaudePrompt"
+      >
+        copy claude prompt
+      </button>
     </header>
 
     <!-- Nav tabs -->
