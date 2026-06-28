@@ -4,70 +4,107 @@
 
 AOE4 Replay Notes is a browser app where Age of Empires IV players log and review their ranked games. All data is stored in the browser's localStorage. This file tells you (Claude) how to interview the user and produce a JSON object the app can import.
 
-## Your role
+**App URL:** derive it from the URL of this file — strip `/llms.txt` from the end.
+For example: if you read `https://example.com/aoe4_replay_notes/llms.txt`, the app is at `https://example.com/aoe4_replay_notes/`.
 
-1. Tell the user you're ready to log a game and will ask a few questions.
-2. Work through the sections below, one at a time. Ask naturally — don't dump every field as a list. Group related questions.
-3. After collecting the info, output a single JSON code block that matches the GameNote schema. Do NOT include `id` or `createdAt` — the app generates those.
-4. Tell the user to copy the JSON and paste it using the "From Claude" button on the Stats tab of the app.
+---
 
-## Interview sections (in order)
+## Your role (step by step)
 
-### 1 — Match basics
-- Date played (default to today if they say "just now" / "today")
-- Win or loss?
-- Which map?
-- Link to the replay on aoe4world.com (optional — skip if they don't have it)
+### Step 1 — Ask for the aoe4world link first
 
-### 2 — Civilizations & players
-- Which civilization did you play?
-- Who was your opponent (player name)?
-- Which civilization did your opponent play?
+Before anything else, ask:
+> "Do you have an aoe4world.com link for this game? If so, paste it and I'll pre-fill what I can."
 
-### 3 — Age-up timings (optional, can all be skipped)
-- When did you hit Feudal Age? (format mm:ss, e.g. "3:45")
-- When did you hit Castle Age?
-- When did your opponent hit Feudal Age?
-- When did your opponent hit Castle Age?
+If they provide a URL like `https://aoe4world.com/players/{profile_id}-{name}/games/{game_id}`:
 
-### 4 — Strategies
-- What was your build / strategy?
-- Which landmarks did you build? (optional)
-- What strategy did your opponent run?
-- Which landmarks did they build? (optional)
+1. Extract `game_id` from the path.
+2. Fetch `https://aoe4world.com/api/v0/games/{game_id}` and parse the response.
+3. Use `profile_id` from the URL to identify which team entry is "me" vs "opponent".
+4. Pre-fill the following fields from the API response:
+   - `date` — from `started_at` (ISO date, YYYY-MM-DD)
+   - `result` — the matching player's `result` field (`"win"` or `"loss"`)
+   - `map` — from `map` (title-case the API value to match the valid map list below)
+   - `myCiv` — from the matching player's `civilization` (map API value → display name using the civ map below)
+   - `opponentName` — from the other team's player `name`
+   - `opponentCiv` — from the other team's player `civilization`
+   - `aoe4worldUrl` — the URL the user gave you
+5. Show the user what you found and ask them to correct anything wrong.
 
-### 5 — Game narrative
-- Walk me through what your opponent did.
-- How did you respond?
-- What were the key moments or turning points?
-- What would you do differently next time?
+If they don't have a link, or the fetch fails, just ask for the basics manually.
 
-### 6 — Self-assessment
-- Which areas do you think you need to improve? (pick from the list below)
-- How would you rate your overall performance? (1 = poor … 5 = excellent)
-- Any other notes?
+### Step 2 — Fill in what's still missing
+
+After pre-filling from aoe4world (or if no link was given), ask about the remaining sections in a natural conversation — not as a bullet list dump. Group related questions together.
+
+**Sections to cover (skip anything already filled from the API):**
+
+- Match basics: date, win/loss, map, aoe4world link
+- Civs & players: your civ, opponent name, opponent civ
+- Age-up timings (all optional — skip if user doesn't know): your Feudal time, your Castle time, opponent Feudal time, opponent Castle time. Format: `mm:ss`
+- Strategies: your build/strategy, your landmarks, opponent's strategy, opponent's landmarks
+- Game narrative: what did your opponent do? How did you respond? Key moments / turning points? What would you do differently?
+- Self-assessment: which improvement areas apply? (offer the list) How would you rate your play 1–5? Any other notes?
+
+### Step 3 — Output
+
+When you have enough information, produce the completed JSON in a fenced code block:
+
+```json
+{ ... }
+```
+
+Then tell the user:
+
+> "Copy the JSON above, then go to **[App URL]** → Stats tab → 'Paste from Claude' button."
+
+Replace `[App URL]` with the actual URL you derived in Step 1.
+
+---
+
+## Civilization name mapping (API value → display name)
+
+| API value | Display name |
+|---|---|
+| abbasid | Abbasid Dynasty |
+| ayyubids | Ayyubids |
+| byzantines | Byzantines |
+| chinese | Chinese |
+| delhi | Delhi Sultanate |
+| english | English |
+| french | French |
+| hre | HRE |
+| lancaster | House of Lancaster |
+| jeanne_darc | Jeanne d'Arc |
+| japanese | Japanese |
+| malians | Malians |
+| mongols | Mongols |
+| dragon | Order of the Dragon |
+| ottomans | Ottomans |
+| rus | Rus |
+| zhu_xi | Zhu Xi's Legacy |
 
 ---
 
 ## GameNote JSON schema
 
-All string fields default to `""` if not provided. `improvementAreas` defaults to `[]`.
+All string fields default to `""` if not collected. `improvementAreas` defaults to `[]`.
 
 ```json
 {
   "date": "YYYY-MM-DD",
   "result": "win | loss",
-  "map": "string",
+  "map": "string — must match a valid map name below",
   "aoe4worldUrl": "string",
 
-  "myCiv": "string",
+  "myCiv": "string — must match a valid civ name below",
   "opponentName": "string",
-  "opponentCiv": "string",
+  "opponentCiv": "string — must match a valid civ name below",
 
-  "myFeudalTime": "mm:ss or empty",
-  "myCastleTime": "mm:ss or empty",
-  "opponentFeudalTime": "mm:ss or empty",
-  "opponentCastleTime": "mm:ss or empty",
+  "myFeudalTime": "mm:ss or empty string",
+  "myCastleTime": "mm:ss or empty string",
+  "opponentFeudalTime": "mm:ss or empty string",
+  "opponentCastleTime": "mm:ss or empty string",
 
   "myStrategy": "string",
   "myLandmarks": "string",
@@ -79,7 +116,7 @@ All string fields default to `""` if not provided. `improvementAreas` defaults t
   "keyMoments": "string",
   "whatIWouldDoNext": "string",
 
-  "improvementAreas": ["array of improvement area IDs"],
+  "improvementAreas": ["array of improvement area IDs — see list below"],
   "selfRating": 1,
   "generalNotes": "string"
 }
@@ -93,36 +130,40 @@ All string fields default to `""` if not provided. `improvementAreas` defaults t
 
 **myCiv / opponentCiv:** Abbasid Dynasty, Ayyubids, Byzantines, Chinese, Delhi Sultanate, English, French, HRE, House of Lancaster, Jeanne d'Arc, Japanese, Malians, Mongols, Order of the Dragon, Ottomans, Rus, Zhu Xi's Legacy, Other / Unknown
 
-**myStrategy / opponentStrategy:** Fast Castle, 2 TC Boom, Feudal Aggression, MAA Rush, Archer Rush, Horseman Rush, Tower Rush, Scout Rush, Springald Rush, Fast Imperial, Sacred Sites, Navy Rush, Siege Push, Landmark Rush, Mixed / Adaptive (opponentStrategy may also be "Unknown")
+**myStrategy / opponentStrategy:** Fast Castle, 2 TC Boom, Feudal Aggression, MAA Rush, Archer Rush, Horseman Rush, Tower Rush, Scout Rush, Springald Rush, Fast Imperial, Sacred Sites, Navy Rush, Siege Push, Landmark Rush, Mixed / Adaptive (opponentStrategy may also be `"Unknown"`)
 
-**improvementAreas** (array of zero or more of these IDs):
-- `"villager_production"` — Villager Production
-- `"tc_idle_time"` — TC Idle Time
-- `"economy_management"` — Economy / Resources
-- `"build_order"` — Build Order Execution
-- `"scouting"` — Scouting
-- `"military_micro"` — Military Micro
-- `"army_composition"` — Army Composition
-- `"upgrades"` — Upgrades Timing
-- `"timing_attacks"` — Timing Attacks
-- `"defense"` — Defense / Walling
-- `"map_control"` — Map Control
-- `"landmark_choice"` — Landmark Choice
-- `"resource_balance"` — Resource Balance
-- `"age_up_timing"` — Age-Up Timing
+**improvementAreas** — include zero or more of these IDs:
+
+| ID | Label |
+|---|---|
+| `villager_production` | Villager Production |
+| `tc_idle_time` | TC Idle Time |
+| `economy_management` | Economy / Resources |
+| `build_order` | Build Order Execution |
+| `scouting` | Scouting |
+| `military_micro` | Military Micro |
+| `army_composition` | Army Composition |
+| `upgrades` | Upgrades Timing |
+| `timing_attacks` | Timing Attacks |
+| `defense` | Defense / Walling |
+| `map_control` | Map Control |
+| `landmark_choice` | Landmark Choice |
+| `resource_balance` | Resource Balance |
+| `age_up_timing` | Age-Up Timing |
 
 **selfRating:** integer 1–5
 
 ---
 
-## Example output
+## Example final output
 
+````
 ```json
 {
   "date": "2026-06-28",
   "result": "win",
   "map": "Dry Arabia",
-  "aoe4worldUrl": "https://aoe4world.com/players/12345678/games/99999999",
+  "aoe4worldUrl": "https://aoe4world.com/players/12345678-PlayerName/games/99999999",
   "myCiv": "English",
   "opponentName": "RivalsX",
   "opponentCiv": "French",
@@ -134,12 +175,15 @@ All string fields default to `""` if not provided. `improvementAreas` defaults t
   "myLandmarks": "Council Hall, King's Palace",
   "opponentStrategy": "Fast Castle",
   "opponentLandmarks": "School of Cavalry",
-  "whatOpponentDid": "Opponent rushed to Castle Age, going for heavy cavalry pressure with a School of Cavalry.",
-  "howIResponded": "Kept early MAA pressure going to slow their eco, added spearmen once cavalry appeared.",
-  "keyMoments": "Denied their second TC spot around 9 minutes — forced them to defend instead of attack.",
-  "whatIWouldDoNext": "Get weapon upgrades faster; I delayed them and my MAA were underperforming late feudal.",
+  "whatOpponentDid": "Opponent rushed to Castle Age for heavy cavalry pressure.",
+  "howIResponded": "Kept MAA pressure going and added spearmen once cavalry appeared.",
+  "keyMoments": "Denied their second TC spot around 9 minutes.",
+  "whatIWouldDoNext": "Get weapon upgrades faster — delayed them and my MAA underperformed.",
   "improvementAreas": ["upgrades", "military_micro"],
   "selfRating": 4,
-  "generalNotes": "Good aggression timing but need to transition faster into Castle defense."
+  "generalNotes": ""
 }
 ```
+````
+
+Then: "Copy the JSON above, then go to **https://example.com/aoe4_replay_notes/** → Stats tab → 'Paste from Claude' button."
