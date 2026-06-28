@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
-import { CIVS, MAPS, OPPONENT_STRATEGIES, IMPROVEMENT_AREAS } from '../types'
+import { reactive, ref, watch } from 'vue'
+import { CIVS, MAPS, MY_STRATEGIES, OPPONENT_STRATEGIES, IMPROVEMENT_AREAS } from '../types'
 import type { GameNote, ImprovementAreaId, Result } from '../types'
 
 const props = defineProps<{
@@ -45,6 +45,27 @@ function blankForm(): Omit<GameNote, 'id' | 'createdAt'> {
 
 const form = reactive<Omit<GameNote, 'id' | 'createdAt'>>(blankForm())
 
+// My strategy dropdown state
+const myStrategySelect = ref('')
+const myStrategyCustom = ref('')
+
+watch([myStrategySelect, myStrategyCustom], ([sel, custom]) => {
+  form.myStrategy = sel === 'Other' ? custom : sel
+})
+
+function initMyStrategy(val: string) {
+  if ((MY_STRATEGIES as readonly string[]).includes(val)) {
+    myStrategySelect.value = val
+    myStrategyCustom.value = ''
+  } else if (val) {
+    myStrategySelect.value = 'Other'
+    myStrategyCustom.value = val
+  } else {
+    myStrategySelect.value = ''
+    myStrategyCustom.value = ''
+  }
+}
+
 // Populate form when editing
 watch(
   () => props.editGame,
@@ -74,8 +95,10 @@ watch(
         selfRating: game.selfRating,
         generalNotes: game.generalNotes,
       })
+      initMyStrategy(game.myStrategy)
     } else {
       Object.assign(form, blankForm())
+      initMyStrategy('')
     }
   },
   { immediate: true }
@@ -207,7 +230,13 @@ function handleSubmit() {
       <div class="field-row">
         <div class="field">
           <label class="field__label">My Strategy</label>
-          <input type="text" v-model="form.myStrategy" placeholder="e.g. Fast Castle, 2 TC" />
+          <select v-model="myStrategySelect">
+            <option value="">— select —</option>
+            <option v-for="s in MY_STRATEGIES" :key="s" :value="s">{{ s }}</option>
+            <option value="Other">Other…</option>
+          </select>
+          <input v-if="myStrategySelect === 'Other'" type="text" v-model="myStrategyCustom"
+            placeholder="Describe your strategy…" class="mt-1.5" />
         </div>
         <div class="field">
           <label class="field__label">My Landmarks</label>
