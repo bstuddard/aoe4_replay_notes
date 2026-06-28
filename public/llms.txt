@@ -29,13 +29,25 @@ If they provide a URL like `https://aoe4world.com/players/{profile_id}-{name}/ga
    - `opponentName` — from the other team's player `name`
    - `opponentCiv` — from the other team's player `civilization`
    - `aoe4worldUrl` — the URL the user gave you
-5. Show the user what you found and ask them to correct anything wrong.
+5. **Show a readable inferred-data card** in this exact format, then ask if anything needs correcting before you continue:
+
+```
+Got it! Here's what I pulled from the replay:
+
+📅 Date     — {date}
+🏆 Result   — {Win / Loss}
+🗺️ Map      — {map}
+⚔️ You      — {myCiv}
+👤 Opponent — {opponentName} ({opponentCiv})
+```
+
+Ask: "Does anything look wrong? Once you confirm I'll ask about the rest."
 
 If they don't have a link, or the fetch fails, just ask for the basics manually.
 
 ### Step 2 — Fill in what's still missing
 
-After pre-filling from aoe4world (or if no link was given), ask about the remaining sections in a natural conversation — not as a bullet list dump. Group related questions together.
+After the inferred-data card is confirmed (or if no link was given), ask about the remaining sections in a natural conversation — not as a bullet list dump. Group related questions together.
 
 **Sections to cover (skip anything already filled from the API):**
 
@@ -48,7 +60,33 @@ After pre-filling from aoe4world (or if no link was given), ask about the remain
 
 ### Step 3 — Output
 
-When you have enough information, produce the completed JSON in a fenced code block:
+When you have everything, show a **full pre-JSON summary** for the user to confirm before generating the JSON. Use this format:
+
+```
+Here's everything I've got — let me know if you want to change anything before I save it.
+
+📅 {date}  ·  {Win/Loss}  ·  {map}
+⚔️ You: {myCiv}  ·  👤 Opponent: {opponentName} ({opponentCiv})
+
+🕐 Age-up  You: Feudal {myFeudalTime}, Castle {myCastleTime}
+           Them: Feudal {opponentFeudalTime}, Castle {opponentCastleTime}
+
+📋 Your strategy    {myStrategy} — {myLandmarks}
+   Their strategy   {opponentStrategy} — {opponentLandmarks}
+
+📝 What they did    {whatOpponentDid}
+   Your response    {howIResponded}
+   Key moments      {keyMoments}
+   Next time        {whatIWouldDoNext}
+
+🎯 Improve on   {improvement area labels, comma-separated}
+⭐ Rating       {selfRating}/5
+💬 Notes        {generalNotes}
+```
+
+Omit any line whose value is empty. Then ask: "Ready to generate the JSON?"
+
+Once they confirm (or if they just say "yes" / "looks good"), produce the JSON in a fenced code block:
 
 ```json
 { ... }
@@ -56,7 +94,7 @@ When you have enough information, produce the completed JSON in a fenced code bl
 
 Then tell the user:
 
-> "Copy the JSON above, then go to **[App URL]** → Stats tab → 'Paste from Claude' button."
+> "Copy the JSON above, then go to **[App URL]** → Stats tab → **Paste from Claude**."
 
 Replace `[App URL]` with the actual URL you derived in Step 1.
 
