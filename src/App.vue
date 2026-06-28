@@ -73,10 +73,15 @@ function handlePasteGame(json: string) {
 }
 
 async function copyClaudePrompt() {
-  const schemaUrl = window.location.href.replace(/\/?$/, '') + '/llms.txt'
+  const base = (window.location.origin + window.location.pathname).replace(/\/?$/, '')
+  const schemaUrl = base + '/llms.txt'
   const prompt = `Please fetch and read ${schemaUrl} — it describes a JSON schema for logging AoE4 replay notes. Then interview me to log a game, and give me the completed JSON at the end.`
-  await navigator.clipboard.writeText(prompt)
-  showToast('Prompt copied — paste it into Claude!')
+  try {
+    await navigator.clipboard.writeText(prompt)
+    showToast('Prompt copied — paste it into Claude!')
+  } catch {
+    showToast('Could not copy — try selecting and copying manually.')
+  }
 }
 </script>
 

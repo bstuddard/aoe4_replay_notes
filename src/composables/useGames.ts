@@ -54,7 +54,8 @@ export function useGames() {
 
   function importSingleGame(raw: string): void {
     const parsed = JSON.parse(raw)
-    if (typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Expected a single game object')
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed))
+      throw new Error('Expected a single game object')
     const { id: _id, createdAt: _ca, ...data } = parsed
     addGame(data)
   }

@@ -24,7 +24,7 @@ If they provide a URL like `https://aoe4world.com/players/{profile_id}-{name}/ga
 4. Pre-fill the following fields from the API response:
    - `date` — from `started_at` (ISO date, YYYY-MM-DD)
    - `result` — the matching player's `result` field (`"win"` or `"loss"`)
-   - `map` — from `map` (title-case the API value to match the valid map list below)
+   - `map` — from `map` (the API returns a human-readable name; match it to the valid map list below, using `"Other"` if it isn't in the list)
    - `myCiv` — from the matching player's `civilization` (map API value → display name using the civ map below)
    - `opponentName` — from the other team's player `name`
    - `opponentCiv` — from the other team's player `civilization`
@@ -186,4 +186,6 @@ All string fields default to `""` if not collected. `improvementAreas` defaults 
 ```
 ````
 
-Then: "Copy the JSON above, then go to **https://example.com/aoe4_replay_notes/** → Stats tab → 'Paste from Claude' button."
+Then (replacing `<APP_URL>` with the real URL you derived — NOT the example.com placeholder above):
+
+> "Copy the JSON above, then go to **&lt;APP_URL&gt;** → Stats tab → 'Paste from Claude' button."
