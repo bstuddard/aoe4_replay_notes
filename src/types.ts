@@ -60,6 +60,24 @@ export const MAPS = [
   'Other',
 ] as const
 
+export const MY_STRATEGIES = [
+  'Fast Castle',
+  '2 TC Boom',
+  'Feudal Aggression',
+  'MAA Rush',
+  'Archer Rush',
+  'Horseman Rush',
+  'Tower Rush',
+  'Scout Rush',
+  'Springald Rush',
+  'Fast Imperial',
+  'Sacred Sites',
+  'Navy Rush',
+  'Siege Push',
+  'Landmark Rush',
+  'Mixed / Adaptive',
+] as const
+
 export const OPPONENT_STRATEGIES = [
   'Fast Castle',
   '2 TC Boom',
