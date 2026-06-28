@@ -1,0 +1,327 @@
+@import "tailwindcss";
+
+/* ---- Design tokens ---- */
+@theme {
+  --color-bg: #080c12;
+  --color-bg-deep: #050709;
+  --color-surface: #0d1219;
+  --color-surface-2: #141d28;
+  --color-surface-3: #1a2535;
+  --color-fg: #e4ddc8;
+  --color-fg-soft: #b8b09a;
+  --color-muted: #6e6858;
+  --color-muted-2: #4a4538;
+  --color-gold: #c8961e;
+  --color-gold-soft: #e3b84a;
+  --color-gold-dim: #8c6914;
+  --color-win: #3a8a5c;
+  --color-win-soft: #6dbd96;
+  --color-loss: #a03828;
+  --color-loss-soft: #d97060;
+  --color-line: rgba(228, 221, 200, 0.07);
+  --color-line-2: rgba(228, 221, 200, 0.13);
+  --color-line-gold: rgba(200, 150, 30, 0.22);
+
+  --font-display: "Georgia", "Palatino Linotype", serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+}
+
+/* ---- Keyframes ---- */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Base ---- */
+@layer base {
+  html, body {
+    background-color: var(--color-bg);
+    background-image:
+      radial-gradient(120% 80% at 50% -5%, rgba(30, 50, 80, 0.35), transparent 55%),
+      radial-gradient(60% 50% at 50% 110%, rgba(20, 10, 5, 0.5), transparent 60%);
+    background-attachment: fixed;
+    color: var(--color-fg);
+    font-family: var(--font-body);
+    min-height: 100svh;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  button {
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  input, select, textarea {
+    font-family: inherit;
+    background: var(--color-surface-2);
+    color: var(--color-fg);
+    border: 1px solid var(--color-line-2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--color-gold-dim);
+    box-shadow: 0 0 0 2px rgba(200, 150, 30, 0.12);
+  }
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236e6858' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--color-muted);
+  }
+}
+
+/* ---- Utilities ---- */
+@utility animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
+}
+@utility animate-pop-in {
+  animation: pop-in 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@utility animate-slide-up {
+  animation: slide-up 0.3s ease-out both;
+}
+
+/* ---- Shared components ---- */
+@layer components {
+  /* Form section card */
+  .form-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-2);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .form-section__title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-gold-soft);
+    margin: 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--color-line-gold);
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .field__label {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Result toggle */
+  .result-toggle {
+    display: flex;
+    gap: 8px;
+  }
+  .result-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1.5px solid var(--color-line-2);
+    background: var(--color-surface-2);
+    color: var(--color-fg-soft);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+  .result-btn--win.active {
+    background: rgba(58, 138, 92, 0.18);
+    border-color: var(--color-win);
+    color: var(--color-win-soft);
+    box-shadow: 0 0 0 1px var(--color-win) inset;
+  }
+  .result-btn--loss.active {
+    background: rgba(160, 56, 40, 0.18);
+    border-color: var(--color-loss);
+    color: var(--color-loss-soft);
+    box-shadow: 0 0 0 1px var(--color-loss) inset;
+  }
+
+  /* Rating stars */
+  .rating {
+    display: flex;
+    gap: 6px;
+  }
+  .rating__star {
+    font-size: 22px;
+    cursor: pointer;
+    transition: transform 0.1s;
+    line-height: 1;
+    color: var(--color-muted-2);
+  }
+  .rating__star.active { color: var(--color-gold-soft); }
+  .rating__star:hover { transform: scale(1.15); }
+
+  /* Improvement area chips */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .chip {
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--color-line-2);
+    background: var(--color-surface-2);
+    color: var(--color-fg-soft);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.13s;
+    user-select: none;
+  }
+  .chip.active {
+    border-color: var(--color-gold-dim);
+    background: rgba(200, 150, 30, 0.12);
+    color: var(--color-gold-soft);
+  }
+
+  /* Primary / secondary buttons */
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(180deg, var(--color-gold-soft), var(--color-gold));
+    color: #1a1005;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s;
+    letter-spacing: 0.04em;
+  }
+  .btn-primary:hover { filter: brightness(1.07); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--color-line-2);
+    background: transparent;
+    color: var(--color-fg-soft);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-secondary:hover {
+    background: var(--color-surface-2);
+    border-color: var(--color-line-gold);
+    color: var(--color-gold-soft);
+  }
+
+  .btn-danger {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(160, 56, 40, 0.3);
+    background: transparent;
+    color: var(--color-loss-soft);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-danger:hover { background: rgba(160, 56, 40, 0.12); }
+
+  /* Game card in list */
+  .game-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .game-card:hover {
+    border-color: var(--color-line-gold);
+    background: var(--color-surface-2);
+  }
+  .game-card--win { border-left: 3px solid var(--color-win); }
+  .game-card--loss { border-left: 3px solid var(--color-loss); }
+
+  /* Stat bar */
+  .stat-bar-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--color-surface-3);
+    overflow: hidden;
+    flex: 1;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--color-gold-dim), var(--color-gold-soft));
+    transition: width 0.4s ease-out;
+  }
+  .stat-bar-fill--win { background: linear-gradient(90deg, var(--color-win), var(--color-win-soft)); }
+  .stat-bar-fill--loss { background: linear-gradient(90deg, var(--color-loss), var(--color-loss-soft)); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--color-muted);
+  }
+  .empty-state__icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .empty-state__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-fg-soft);
+    margin: 0 0 6px;
+  }
+  .empty-state__sub {
+    font-size: 13px;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
