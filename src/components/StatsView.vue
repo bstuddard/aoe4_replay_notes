@@ -241,9 +241,46 @@ const maxAreaCount = computed(() =>
 
     </template>
 
+    <!-- Paste from Claude -->
+    <div class="form-section">
+      <p class="form-section__title">Add from Claude</p>
+
+      <div v-if="!showPaste">
+        <p class="text-[12px] text-muted leading-relaxed mb-2">
+          Copy the Claude prompt from the top of the page, chat with Claude, then paste the JSON it gives you here.
+        </p>
+        <button
+          type="button"
+          class="btn-primary w-full"
+          @click="showPaste = true"
+        >
+          Paste from Claude
+        </button>
+      </div>
+
+      <div v-else class="flex flex-col gap-2">
+        <textarea
+          v-model="pasteText"
+          class="w-full rounded-[8px] border border-line bg-surface text-fg text-[12px] font-mono p-2.5 resize-none focus:outline-none focus:border-line-gold"
+          rows="8"
+          placeholder='{ "date": "2026-06-28", "result": "win", ... }'
+          autofocus
+        />
+        <p v-if="pasteError" class="text-[11px] text-loss-soft">{{ pasteError }}</p>
+        <div class="flex gap-2">
+          <button type="button" class="btn-primary flex-1" @click="submitPaste">
+            Save Game
+          </button>
+          <button type="button" class="btn-secondary flex-1" @click="cancelPaste">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Data management -->
     <div class="form-section">
-      <p class="form-section__title">Data</p>
+      <p class="form-section__title">Backup &amp; Restore</p>
       <p class="text-[12px] text-muted leading-relaxed">
         Your notes are stored locally in your browser. Export to back them up or move to another device.
       </p>
@@ -255,40 +292,6 @@ const maxAreaCount = computed(() =>
           Import JSON
           <input type="file" accept=".json" class="hidden" @change="handleImport" />
         </label>
-      </div>
-
-      <!-- From Claude paste -->
-      <div class="mt-2">
-        <button
-          v-if="!showPaste"
-          type="button"
-          class="btn-secondary w-full"
-          @click="showPaste = true"
-        >
-          Paste from Claude
-        </button>
-
-        <div v-else class="flex flex-col gap-2">
-          <p class="text-[11px] text-muted leading-relaxed">
-            Ask Claude to read <span class="font-mono text-fg-soft">llms.txt</span> from this site,
-            then paste the JSON it gives you here.
-          </p>
-          <textarea
-            v-model="pasteText"
-            class="w-full rounded-[8px] border border-line bg-surface text-fg text-[12px] font-mono p-2.5 resize-none focus:outline-none focus:border-line-gold"
-            rows="8"
-            placeholder='{ "date": "2026-06-28", "result": "win", ... }'
-          />
-          <p v-if="pasteError" class="text-[11px] text-loss-soft">{{ pasteError }}</p>
-          <div class="flex gap-2">
-            <button type="button" class="btn-primary flex-1" @click="submitPaste">
-              Save Game
-            </button>
-            <button type="button" class="btn-secondary flex-1" @click="cancelPaste">
-              Cancel
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>

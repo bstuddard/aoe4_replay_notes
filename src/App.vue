@@ -1,51 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import GameForm from './components/GameForm.vue'
 import GameList from './components/GameList.vue'
 import StatsView from './components/StatsView.vue'
 import { useGames } from './composables/useGames'
-import type { GameNote } from './types'
 
-type View = 'history' | 'log' | 'stats'
+type View = 'history' | 'stats'
 
 const view = ref<View>('history')
-const editingGame = ref<GameNote | null>(null)
 const toast = ref('')
 let toastTimer: ReturnType<typeof setTimeout>
 
-const { games, addGame, updateGame, deleteGame, exportJSON, importJSON, importSingleGame } = useGames()
+const { games, deleteGame, exportJSON, importJSON, importSingleGame } = useGames()
 
 function showToast(msg: string) {
   clearTimeout(toastTimer)
   toast.value = msg
   toastTimer = setTimeout(() => (toast.value = ''), 2800)
-}
-
-function goLog() {
-  editingGame.value = null
-  view.value = 'log'
-}
-
-function handleEdit(game: GameNote) {
-  editingGame.value = game
-  view.value = 'log'
-}
-
-function handleFormSubmit(data: Omit<GameNote, 'id' | 'createdAt'>) {
-  if (editingGame.value) {
-    updateGame(editingGame.value.id, data)
-    showToast('Game note updated.')
-  } else {
-    addGame(data)
-    showToast('Game note saved!')
-  }
-  editingGame.value = null
-  view.value = 'history'
-}
-
-function handleCancel() {
-  editingGame.value = null
-  view.value = 'history'
 }
 
 function handleDelete(id: string) {
@@ -104,19 +74,18 @@ async function copyClaudePrompt() {
     </header>
 
     <!-- Nav tabs -->
-    <nav class="grid grid-cols-3 gap-2 mb-5" role="tablist">
+    <nav class="grid grid-cols-2 gap-2 mb-5" role="tablist">
       <button
         v-for="tab in [
           { id: 'history', label: 'History', sub: `${games.length} game${games.length !== 1 ? 's' : ''}` },
-          { id: 'log',     label: 'Log Game', sub: editingGame ? 'editing' : 'add new' },
-          { id: 'stats',   label: 'Stats',    sub: 'win rate' },
+          { id: 'stats',   label: 'Stats',   sub: 'win rate · data' },
         ] as { id: View; label: string; sub: string }[]"
         :key="tab.id"
         class="flex flex-col gap-0.5 py-[9px] px-[6px] rounded-[10px] border border-line bg-surface text-fg-soft cursor-pointer transition-[border-color,background] duration-150 active:scale-[0.97]"
         :class="view === tab.id ? 'border-line-gold bg-surface-2 shadow-[0_0_0_1px_var(--color-line-gold)_inset]' : ''"
         role="tab"
         :aria-selected="view === tab.id"
-        @click="tab.id === 'log' ? goLog() : (view = tab.id)"
+        @click="view = tab.id"
       >
         <span
           class="text-[13px] font-semibold"
@@ -131,23 +100,8 @@ async function copyClaudePrompt() {
       <GameList
         v-if="view === 'history'"
         :games="games"
-        @edit="handleEdit"
         @delete="handleDelete"
       />
-
-      <div v-else-if="view === 'log'">
-        <div class="mb-4 flex items-center gap-2">
-          <h2 class="m-0 font-display text-[18px] text-fg-soft">
-            {{ editingGame ? 'Edit Game Note' : 'Log New Game' }}
-          </h2>
-          <span v-if="editingGame" class="text-[11px] text-muted-2 font-mono">editing</span>
-        </div>
-        <GameForm
-          :edit-game="editingGame"
-          @submit="handleFormSubmit"
-          @cancel="handleCancel"
-        />
-      </div>
 
       <StatsView
         v-else-if="view === 'stats'"

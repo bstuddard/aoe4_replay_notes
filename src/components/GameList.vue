@@ -8,7 +8,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  edit: [game: GameNote]
   delete: [id: string]
 }>()
 
@@ -102,7 +101,7 @@ function confirmDelete(id: string) {
     <div v-if="games.length === 0" class="empty-state">
       <div class="empty-state__icon">⚔️</div>
       <p class="empty-state__title">No games logged yet</p>
-      <p class="empty-state__sub">Use "Log Game" to save your first replay analysis.</p>
+      <p class="empty-state__sub">Copy the Claude prompt above, chat with Claude, then paste the JSON on the Stats tab.</p>
     </div>
 
     <div v-else-if="filtered.length === 0" class="empty-state">
@@ -219,7 +218,6 @@ function confirmDelete(id: string) {
 
           <!-- Action buttons -->
           <div class="flex gap-2 pt-1">
-            <button type="button" class="btn-secondary" @click.stop="emit('edit', game)">Edit</button>
             <button type="button" class="btn-danger" @click.stop="confirmDelete(game.id)">Delete</button>
           </div>
         </div>
