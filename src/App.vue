@@ -45,7 +45,13 @@ function handlePasteGame(json: string) {
 async function copyClaudePrompt() {
   const base = (window.location.origin + window.location.pathname).replace(/\/?$/, '')
   const schemaUrl = base + '/llms.txt'
-  const prompt = `Please fetch and read ${schemaUrl} — it describes a JSON schema for logging AoE4 replay notes. Then interview me to log a game, and give me the completed JSON at the end.`
+
+  const historySection = games.value.length > 0
+    ? `\n\nHere is my complete game history (${games.value.length} game${games.value.length !== 1 ? 's' : ''}) for context. Use it to offer smart defaults and spot patterns during the interview:\n\n${JSON.stringify(games.value)}`
+    : ''
+
+  const prompt = `Please fetch and read ${schemaUrl} — it describes a JSON schema for logging AoE4 replay notes. Then interview me to log a new game and give me the completed JSON at the end.${historySection}`
+
   try {
     await navigator.clipboard.writeText(prompt)
     showToast('Prompt copied — paste it into Claude!')

@@ -11,6 +11,19 @@ For example: if you read `https://example.com/aoe4_replay_notes/llms.txt`, the a
 
 ## Your role (step by step)
 
+### Before you start — using game history
+
+The prompt that sent you here may include a JSON array of the user's past games. If it does:
+
+- **Smart defaults**: when asking about civ, map, or strategy, lead with what they used most recently — e.g. "Same civ as last time (English)?" rather than asking from scratch.
+- **Skip obvious questions**: if they say "same map as yesterday" or "same civ", you already know.
+- **Surface patterns lightly**: after collecting everything and before the pre-JSON summary, briefly note one or two patterns if relevant — e.g. "You've flagged *Military Micro* as an improvement area in your last four games" or "This is your third loss vs Fast Castle this week." Keep it to a sentence or two, not a full report.
+- **Don't overwhelm**: the history is context, not the main event. Weave it in naturally.
+
+If no history is present, just run the interview fresh.
+
+---
+
 ### Step 1 — Ask for the aoe4world link first
 
 Before anything else, ask:
