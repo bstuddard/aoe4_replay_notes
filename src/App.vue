@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import GameList from './components/GameList.vue'
 import StatsView from './components/StatsView.vue'
 import { useGames } from './composables/useGames'
@@ -11,6 +11,10 @@ const toast = ref('')
 let toastTimer: ReturnType<typeof setTimeout>
 
 const { games, deleteGame, exportJSON, importJSON, importSingleGame } = useGames()
+
+const gameUrl = ref('')
+const skipUrl = ref(false)
+const canCopy = computed(() => gameUrl.value.trim().length > 0 || skipUrl.value)
 
 function showToast(msg: string) {
   clearTimeout(toastTimer)
@@ -46,15 +50,21 @@ async function copyClaudePrompt() {
   const base = (window.location.origin + window.location.pathname).replace(/\/?$/, '')
   const schemaUrl = base + '/llms.txt'
 
+  const urlLine = gameUrl.value.trim()
+    ? `\n\nThe game to log is: ${gameUrl.value.trim()}\nStart by fetching that game's data from the aoe4world API, then continue the interview for the remaining fields.`
+    : ''
+
   const historySection = games.value.length > 0
     ? `\n\nHere is my complete game history (${games.value.length} game${games.value.length !== 1 ? 's' : ''}) for context. Use it to offer smart defaults and spot patterns during the interview:\n\n${JSON.stringify(games.value)}`
     : ''
 
-  const prompt = `Please fetch and read ${schemaUrl} — it describes a JSON schema for logging AoE4 replay notes. Then interview me to log a new game and give me the completed JSON at the end.${historySection}`
+  const prompt = `Please fetch and read ${schemaUrl} — it describes a JSON schema for logging AoE4 replay notes. Then interview me to log a new game and give me the completed JSON at the end.${urlLine}${historySection}`
 
   try {
     await navigator.clipboard.writeText(prompt)
     showToast('Prompt copied — paste it into Claude!')
+    gameUrl.value = ''
+    skipUrl.value = false
   } catch {
     showToast('Could not copy — try selecting and copying manually.')
   }
@@ -70,13 +80,39 @@ async function copyClaudePrompt() {
     <header class="text-center mb-5">
       <h1 class="m-0 font-display text-[30px] tracking-[0.28em] font-bold text-gold-soft indent-[0.28em]">REPLAY NOTES</h1>
       <p class="mt-1 mb-0 font-mono text-[10px] tracking-[0.16em] uppercase text-muted">Age of Empires IV · Game Analysis</p>
-      <button
-        type="button"
-        class="mt-3 px-3 py-1.5 rounded-full border border-line text-[11px] font-mono tracking-wide text-muted hover:border-line-gold hover:text-gold-soft transition-colors duration-150"
-        @click="copyClaudePrompt"
-      >
-        copy claude prompt
-      </button>
+
+      <!-- Claude prompt launcher -->
+      <div class="mt-4 flex flex-col gap-2 text-left">
+        <label class="field__label text-center">aoe4world game link</label>
+        <input
+          v-model="gameUrl"
+          type="url"
+          placeholder="https://aoe4world.com/players/…/games/…"
+          class="w-full"
+          @keydown.enter="canCopy && copyClaudePrompt()"
+        />
+        <div class="flex items-center justify-between gap-3">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input
+              v-model="skipUrl"
+              type="checkbox"
+              class="accent-[var(--color-gold-soft)] w-3.5 h-3.5"
+            />
+            <span class="text-[11px] text-muted">no link yet</span>
+          </label>
+          <button
+            type="button"
+            :disabled="!canCopy"
+            class="px-4 py-1.5 rounded-full border text-[11px] font-mono tracking-wide transition-colors duration-150"
+            :class="canCopy
+              ? 'border-line-gold text-gold-soft hover:bg-surface-2 cursor-pointer'
+              : 'border-line text-muted-2 cursor-not-allowed opacity-50'"
+            @click="copyClaudePrompt"
+          >
+            copy claude prompt
+          </button>
+        </div>
+      </div>
     </header>
 
     <!-- Nav tabs -->
