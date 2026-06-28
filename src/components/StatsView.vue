@@ -69,11 +69,14 @@ const pasteError = ref('')
 function submitPaste() {
   pasteError.value = ''
   try {
+    const parsed = JSON.parse(pasteText.value.trim())
+    if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null)
+      throw new Error('Expected a single JSON object, not an array or primitive.')
     emit('pasteGame', pasteText.value.trim())
     pasteText.value = ''
     showPaste.value = false
-  } catch {
-    pasteError.value = 'Invalid JSON — check the format and try again.'
+  } catch (e) {
+    pasteError.value = e instanceof Error ? e.message : 'Invalid JSON — check the format and try again.'
   }
 }
 

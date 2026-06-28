@@ -63,8 +63,13 @@ async function handleImport(file: File) {
 }
 
 function handlePasteGame(json: string) {
-  importSingleGame(json)
-  showToast('Game note saved from Claude!')
+  try {
+    importSingleGame(json)
+    showToast('Game note saved from Claude!')
+    view.value = 'history'
+  } catch {
+    showToast('Save failed — check the JSON format.')
+  }
 }
 
 async function copyClaudePrompt() {
